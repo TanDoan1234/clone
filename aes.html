@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thuật toán mã hóa AES</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap");
+
+      :root {
+        --primary-color: #3498db;
+        --secondary-color: #2980b9;
+        --accent-color: #e74c3c;
+        --background-color: #ecf0f1;
+        --text-color: #2c3e50;
+        --code-bg: #f8f9fa;
+        --slide-bg: #ffffff;
+        --header-color: #2c3e50;
+        --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Roboto", sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        line-height: 1.6;
+        padding: 20px;
+      }
+
+      .slides-container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      .slide {
+        background-color: var(--slide-bg);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 40px;
+        margin-bottom: 30px;
+        overflow: hidden;
+        page-break-after: always;
+      }
+
+      h1 {
+        color: var(--primary-color);
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      h2 {
+        color: var(--secondary-color);
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: 10px;
+      }
+
+      h3 {
+        color: var(--header-color);
+        font-size: 1.4rem;
+        margin-top: 20px;
+        margin-bottom: 15px;
+      }
+
+      ul,
+      ol {
+        margin-left: 20px;
+        margin-bottom: 20px;
+      }
+
+      li {
+        margin-bottom: 8px;
+      }
+
+      pre {
+        background-color: var(--code-bg);
+        border-radius: 5px;
+        padding: 15px;
+        overflow-x: auto;
+        margin: 20px 0;
+        font-family: monospace;
+        border-left: 4px solid var(--primary-color);
+      }
+
+      .process-diagram {
+        background-color: #f0f8ff;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        font-family: monospace;
+        white-space: pre;
+        color: #333;
+        border: 1px solid #ccc;
+        line-height: 1.3;
+      }
+
+      .matrix-container {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+      }
+
+      .matrix {
+        border-collapse: collapse;
+        background-color: #f8f9fa;
+        color: #333;
+        margin: 0 10px;
+      }
+
+      .matrix td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: center;
+        min-width: 40px;
+      }
+
+      .matrix-arrow {
+        display: flex;
+        align-items: center;
+        font-size: 24px;
+        margin: 0 15px;
+        color: var(--primary-color);
+      }
+
+      .highlight {
+        color: var(--accent-color);
+        font-weight: bold;
+      }
+
+      .operation {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 20px 0;
+      }
+
+      .operation-symbol {
+        font-size: 24px;
+        margin: 0 15px;
+        color: var(--accent-color);
+      }
+
+      .step-container {
+        background-color: #f5f5f5;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        border-left: 4px solid var(--primary-color);
+      }
+
+      .step-title {
+        color: var(--primary-color);
+        font-weight: bold;
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+      }
+
+      .step-description {
+        margin-bottom: 15px;
+      }
+
+      .byte-cell {
+        background-color: #e8f4f8;
+      }
+
+      .sbox-cell {
+        background-color: #e8f8e8;
+      }
+
+      .shift-row-0 {
+        background-color: #ffffff;
+      }
+
+      .shift-row-1 {
+        background-color: #e6f2ff;
+      }
+
+      .shift-row-2 {
+        background-color: #cce5ff;
+      }
+
+      .shift-row-3 {
+        background-color: #b3d9ff;
+      }
+
+      .example-box {
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+
+      .example-step {
+        margin: 10px 0;
+        padding: 10px;
+        background-color: #f0f7fc;
+        border-radius: 5px;
+      }
+
+      .example-matrix {
+        font-family: monospace;
+        margin: 10px auto;
+        white-space: pre;
+        color: #333;
+        background-color: #f8f8f8;
+        padding: 15px;
+        border-radius: 5px;
+        display: inline-block;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 30px;
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      .cover-slide {
+        text-align: center;
+        height: 80vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: linear-gradient(135deg, #3498db, #2c3e50);
+        color: white;
+        border-radius: 10px;
+        padding: 40px;
+      }
+
+      .cover-slide h1 {
+        color: white;
+        font-size: 3rem;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .cover-slide h2 {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.8rem;
+        border: none;
+        margin-bottom: 40px;
+      }
+
+      .phase-highlight {
+        background-color: #ffe0b2;
+        padding: 2px 8px;
+        border-radius: 4px;
+        color: #e65100;
+        font-weight: 500;
+      }
+
+      .thank-you-slide {
+        text-align: center;
+        height: 60vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: linear-gradient(135deg, #2c3e50, #3498db);
+        color: white;
+        border-radius: 10px;
+      }
+
+      .thank-you-slide h1 {
+        color: white;
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="slides-container">
+      <!-- Slide 1: Cover -->
+      <div class="slide cover-slide">
+        <h1>Thuật Toán Mã Hóa AES</h1>
+        <h2>Advanced Encryption Standard</h2>
+      </div>
+
+      <!-- Slide 2: Giới thiệu -->
+      <div class="slide">
+        <h2>Giới thiệu</h2>
+        <ul>
+          <li>
+            AES là thuật toán mã hóa khối với kích thước khối cố định
+            <span class="highlight">128-bit (16 byte)</span>
+          </li>
+          <li>Được sử dụng rộng rãi cho bảo mật thông tin</li>
+          <li>
+            Có 3 biến thể dựa trên độ dài khóa:
+            <ul>
+              <li><strong>AES-128:</strong> 10 vòng</li>
+              <li><strong>AES-192:</strong> 12 vòng</li>
+              <li><strong>AES-256:</strong> 14 vòng</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Slide 3: Quy trình tổng quát -->
+      <div class="slide">
+        <h2>Quy trình tổng quát</h2>
+        <div class="process-diagram">
+          Đầu vào: Plaintext (128-bit) + Khóa │ ▼ ┌─────────────────┐ │
+          AddRoundKey │ ←
+          <span style="color: #e74c3c">Vòng khởi tạo (Round 0)</span>
+          └────────┬────────┘ │ ▼ ┌─────────────────┐ │ SubBytes │
+          └────────┬────────┘ │ ▼ ┌─────────────────┐ │ ShiftRows │
+          <span style="color: #3498db">Các vòng chính</span> └────────┬────────┘
+          <span style="color: #3498db">(Vòng 1-9/11/13)</span> │ ▼
+          ┌─────────────────┐ │ MixColumns │ └────────┬────────┘ │ ▼
+          ┌─────────────────┐ │ AddRoundKey │ ←
+          <span style="color: #3498db">Thêm khóa vòng</span> └────────┬────────┘
+          │ ▼ . <span style="color: #7f8c8d">Lặp lại 9/11/13 lần</span> .
+          <span style="color: #7f8c8d">(tùy thuộc vào độ dài khóa)</span> . │ ▼
+          ┌─────────────────┐ │ SubBytes │ └────────┬────────┘ │ ▼
+          ┌─────────────────┐ │ ShiftRows │
+          <span style="color: #27ae60">Vòng cuối cùng</span> └────────┬────────┘
+          <span style="color: #27ae60">(không có MixColumns)</span> │ ▼
+          ┌─────────────────┐ │ AddRoundKey │ ←
+          <span style="color: #27ae60">Thêm khóa vòng cuối</span>
+          └────────┬────────┘ │ ▼ Ciphertext
+        </div>
+      </div>
+
+      <!-- Slide 4: Cấu trúc dữ liệu -->
+      <div class="slide">
+        <h2>Cấu trúc dữ liệu</h2>
+        <p>
+          Dữ liệu được tổ chức thành ma trận trạng thái 4×4 byte, mỗi byte được
+          xử lý qua các phép biến đổi:
+        </p>
+
+        <div class="matrix-container">
+          <table class="matrix">
+            <tr>
+              <td style="background-color: #e3f2fd">0</td>
+              <td style="background-color: #e3f2fd">4</td>
+              <td style="background-color: #e3f2fd">8</td>
+              <td style="background-color: #e3f2fd">12</td>
+            </tr>
+            <tr>
+              <td style="background-color: #bbdefb">1</td>
+              <td style="background-color: #bbdefb">5</td>
+              <td style="background-color: #bbdefb">9</td>
+              <td style="background-color: #bbdefb">13</td>
+            </tr>
+            <tr>
+              <td style="background-color: #90caf9">2</td>
+              <td style="background-color: #90caf9">6</td>
+              <td style="background-color: #90caf9">10</td>
+              <td style="background-color: #90caf9">14</td>
+            </tr>
+            <tr>
+              <td style="background-color: #64b5f6">3</td>
+              <td style="background-color: #64b5f6">7</td>
+              <td style="background-color: #64b5f6">11</td>
+              <td style="background-color: #64b5f6">15</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Slide 5: SubBytes -->
+      <div class="slide">
+        <h2>1. SubBytes (Thay thế byte)</h2>
+
+        <div class="step-container">
+          <div class="step-title">Mục đích:</div>
+          <div class="step-description">Tạo tính phi tuyến cho thuật toán</div>
+
+          <div class="step-title">Cách thức:</div>
+          <div class="step-description">
+            Mỗi byte trong ma trận trạng thái được thay thế bằng một byte khác
+            theo bảng tra cứu S-box
+          </div>
+        </div>
+
+        <div class="matrix-container">
+          <table class="matrix">
+            <tr>
+              <td class="byte-cell">a</td>
+              <td class="byte-cell">b</td>
+              <td class="byte-cell">c</td>
+              <td class="byte-cell">d</td>
+            </tr>
+            <tr>
+              <td class="byte-cell">e</td>
+              <td class="byte-cell">f</td>
+              <td class="byte-cell">g</td>
+              <td class="byte-cell">h</td>
+            </tr>
+            <tr>
+              <td class="byte-cell">i</td>
+              <td class="byte-cell">j</td>
+              <td class="byte-cell">k</td>
+              <td class="byte-cell">l</td>
+            </tr>
+            <tr>
+              <td class="byte-cell">m</td>
+              <td class="byte-cell">n</td>
+              <td class="byte-cell">o</td>
+              <td class="byte-cell">p</td>
+            </tr>
+          </table>
+
+          <div class="matrix-arrow">→</div>
+
+          <table class="matrix">
+            <tr>
+              <td class="sbox-cell">S(a)</td>
+              <td class="sbox-cell">S(b)</td>
+              <td class="sbox-cell">S(c)</td>
+              <td class="sbox-cell">S(d)</td>
+            </tr>
+            <tr>
+              <td class="sbox-cell">S(e)</td>
+              <td class="sbox-cell">S(f)</td>
+              <td class="sbox-cell">S(g)</td>
+              <td class="sbox-cell">S(h)</td>
+            </tr>
+            <tr>
+              <td class="sbox-cell">S(i)</td>
+              <td class="sbox-cell">S(j)</td>
+              <td class="sbox-cell">S(k)</td>
+              <td class="sbox-cell">S(l)</td>
+            </tr>
+            <tr>
+              <td class="sbox-cell">S(m)</td>
+              <td class="sbox-cell">S(n)</td>
+              <td class="sbox-cell">S(o)</td>
+              <td class="sbox-cell">S(p)</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Slide 6: ShiftRows -->
+      <div class="slide">
+        <h2>2. ShiftRows (Dịch hàng)</h2>
+
+        <div class="step-container">
+          <div class="step-title">Mục đích:</div>
+          <div class="step-description">
+            Tạo tính khuếch tán (diffusion) trong ma trận trạng thái
+          </div>
+
+          <div class="step-title">Cách thức:</div>
+          <ul>
+            <li>Hàng 0: <span class="highlight">Không dịch</span></li>
+            <li>Hàng 1: <span class="highlight">Dịch trái 1 byte</span></li>
+            <li>Hàng 2: <span class="highlight">Dịch trái 2 byte</span></li>
+            <li>Hàng 3: <span class="highlight">Dịch trái 3 byte</span></li>
+          </ul>
+        </div>
+
+        <div class="matrix-container">
+          <table class="matrix">
+            <tr>
+              <td class="shift-row-0">a</td>
+              <td class="shift-row-0">b</td>
+              <td class="shift-row-0">c</td>
+              <td class="shift-row-0">d</td>
+            </tr>
+            <tr>
+              <td class="shift-row-1">e</td>
+              <td class="shift-row-1">f</td>
+              <td class="shift-row-1">g</td>
+              <td class="shift-row-1">h</td>
+            </tr>
+            <tr>
+              <td class="shift-row-2">i</td>
+              <td class="shift-row-2">j</td>
+              <td class="shift-row-2">k</td>
+              <td class="shift-row-2">l</td>
+            </tr>
+            <tr>
+              <td class="shift-row-3">m</td>
+              <td class="shift-row-3">n</td>
+              <td class="shift-row-3">o</td>
+              <td class="shift-row-3">p</td>
+            </tr>
+          </table>
+
+          <div class="matrix-arrow">→</div>
+
+          <table class="matrix">
+            <tr>
+              <td class="shift-row-0">a</td>
+              <td class="shift-row-0">b</td>
+              <td class="shift-row-0">c</td>
+              <td class="shift-row-0">d</td>
+            </tr>
+            <tr>
+              <td class="shift-row-1">f</td>
+              <td class="shift-row-1">g</td>
+              <td class="shift-row-1">h</td>
+              <td class="shift-row-1">e</td>
+            </tr>
+            <tr>
+              <td class="shift-row-2">k</td>
+              <td class="shift-row-2">l</td>
+              <td class="shift-row-2">i</td>
+              <td class="shift-row-2">j</td>
+            </tr>
+            <tr>
+              <td class="shift-row-3">p</td>
+              <td class="shift-row-3">m</td>
+              <td class="shift-row-3">n</td>
+              <td class="shift-row-3">o</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Slide 7: MixColumns -->
+      <div class="slide">
+        <h2>3. MixColumns (Trộn cột)</h2>
+
+        <div class="step-container">
+          <div class="step-title">Mục đích:</div>
+          <div class="step-description">
+            Kết hợp 4 byte trong mỗi cột để tăng tính khuếch tán
+          </div>
+
+          <div class="step-title">Cách thức:</div>
+          <div class="step-description">
+            Mỗi cột được nhân với một ma trận cố định trong trường hữu hạn
+            GF(2^8)
+          </div>
+        </div>
+
+        <div
+          style="
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+          "
+        >
+          <table class="matrix" style="background-color: #e8f4f8">
+            <tr>
+              <td>a'</td>
+            </tr>
+            <tr>
+              <td>b'</td>
+            </tr>
+            <tr>
+              <td>c'</td>
+            </tr>
+            <tr>
+              <td>d'</td>
+            </tr>
+          </table>
+
+          <div style="margin: 0 10px; font-size: 24px">=</div>
+
+          <table class="matrix" style="background-color: #fff8e1">
+            <tr>
+              <td>2</td>
+              <td>3</td>
+              <td>1</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td>2</td>
+              <td>3</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td>1</td>
+              <td>2</td>
+              <td>3</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>1</td>
+              <td>1</td>
+              <td>2</td>
+            </tr>
+          </table>
+
+          <div style="margin: 0 10px; font-size: 24px">×</div>
+
+          <table class="matrix" style="background-color: #e3f2fd">
+            <tr>
+              <td>a</td>
+            </tr>
+            <tr>
+              <td>b</td>
+            </tr>
+            <tr>
+              <td>c</td>
+            </tr>
+            <tr>
+              <td>d</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Slide 8: AddRoundKey -->
+      <div class="slide">
+        <h2>4. AddRoundKey (Thêm khóa vòng)</h2>
+
+        <div class="step-container">
+          <div class="step-title">Mục đích:</div>
+          <div class="step-description">Kết hợp dữ liệu với khóa vòng</div>
+
+          <div class="step-title">Cách thức:</div>
+          <div class="step-description">
+            Thực hiện phép XOR giữa trạng thái hiện tại và khóa vòng
+          </div>
+        </div>
+
+        <div class="operation">
+          <table class="matrix" style="background-color: #e3f2fd">
+            <tr>
+              <td>a</td>
+              <td>b</td>
+              <td>c</td>
+            </tr>
+            <tr>
+              <td>d</td>
+              <td>e</td>
+              <td>f</td>
+            </tr>
+            <tr>
+              <td>g</td>
+              <td>h</td>
+              <td>i</td>
+            </tr>
+          </table>
+
+          <div class="operation-symbol">⊕</div>
+
+          <table class="matrix" style="background-color: #e8f5e9">
+            <tr>
+              <td>k1</td>
+              <td>k2</td>
+              <td>k3</td>
+            </tr>
+            <tr>
+              <td>k4</td>
+              <td>k5</td>
+              <td>k6</td>
+            </tr>
+            <tr>
+              <td>k7</td>
+              <td>k8</td>
+              <td>k9</td>
+            </tr>
+          </table>
+
+          <div class="operation-symbol">=</div>
+
+          <table class="matrix" style="background-color: #f3e5f5">
+            <tr>
+              <td>a⊕k1</td>
+              <td>b⊕k2</td>
+              <td>c⊕k3</td>
+            </tr>
+            <tr>
+              <td>d⊕k4</td>
+              <td>e⊕k5</td>
+              <td>f⊕k6</td>
+            </tr>
+            <tr>
+              <td>g⊕k7</td>
+              <td>h⊕k8</td>
+              <td>i⊕k9</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Slide 9: Ví dụ cụ thể -->
+      <div class="slide">
+        <h2>Ví dụ cụ thể: Mã hóa "HelloAES"</h2>
+
+        <div class="example-box">
+          <div class="example-step">
+            <h3>1. Chuyển đổi sang bytes:</h3>
+            <div
+              style="
+                padding: 10px;
+                font-family: monospace;
+                background-color: #f5f5f5;
+                border-radius: 5px;
+                display: inline-block;
+              "
+            >
+              48 65 6c 6c 6f 41 45 53
+            </div>
+          </div>
+
+          <div class="example-step">
+            <h3>2. Thêm padding (PKCS7) để đủ 16 byte:</h3>
+            <div
+              style="
+                padding: 10px;
+                font-family: monospace;
+                background-color: #f5f5f5;
+                border-radius: 5px;
+                color: #333;
+              "
+            >
+              <span style="color: #3498db">48 65 6c 6c 6f 41 45 53</span>
+              <span style="color: #e74c3c">08 08 08 08 08 08 08 08</span>
+            </div>
+            <div style="margin-top: 5px; font-size: 0.9em; color: #666">
+              <span style="color: #3498db">Dữ liệu gốc</span> |
+              <span style="color: #e74c3c">Padding</span>
+            </div>
+          </div>
+
+          <div class="example-step">
+            <h3>3. Biểu diễn thành ma trận trạng thái:</h3>
+            <div class="matrix-container">
+              <table class="matrix">
+                <tr>
+                  <td style="background-color: #e3f2fd">48</td>
+                  <td style="background-color: #e3f2fd">6c</td>
+                  <td style="background-color: #e3f2fd">41</td>
+                  <td style="background-color: #e3f2fd">08</td>
+                </tr>
+                <tr>
+                  <td style="background-color: #bbdefb">65</td>
+                  <td style="background-color: #bbdefb">6f</td>
+                  <td style="background-color: #bbdefb">45</td>
+                  <td style="background-color: #bbdefb">08</td>
+                </tr>
+                <tr>
+                  <td style="background-color: #90caf9">6c</td>
+                  <td style="background-color: #90caf9">41</td>
+                  <td style="background-color: #90caf9">53</td>
+                  <td style="background-color: #90caf9">08</td>
+                </tr>
+                <tr>
+                  <td style="background-color: #64b5f6">6c</td>
+                  <td style="background-color: #64b5f6">45</td>
+                  <td style="background-color: #64b5f6">08</td>
+                  <td style="background-color: #64b5f6">08</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <p>
+          Sau đó, ma trận này được xử lý qua 10 vòng AES-128, với mỗi vòng thực
+          hiện 4 phép biến đổi chính.
+        </p>
+      </div>
+
+      <!-- Slide 10: Tóm tắt -->
+      <div class="slide">
+        <h2>Tóm tắt thuật toán AES</h2>
+
+        <ul>
+          <li>Thuật toán mã hóa khối tiêu chuẩn, độ an toàn cao</li>
+          <li>
+            Kích thước khối cố định
+            <span class="highlight">128-bit (16 byte)</span>
+          </li>
+          <li>
+            Ba biến thể với độ dài khóa khác nhau:
+            <ul>
+              <li>
+                <span class="phase-highlight">AES-128:</span> Khóa 128-bit, 10
+                vòng
+              </li>
+              <li>
+                <span class="phase-highlight">AES-192:</span> Khóa 192-bit, 12
+                vòng
+              </li>
+              <li>
+                <span class="phase-highlight">AES-256:</span> Khóa 256-bit, 14
+                vòng
+              </li>
+            </ul>
+          </li>
+          <li>
+            Bốn phép biến đổi chính:
+            <ul>
+              <li><strong>SubBytes:</strong> Thay thế byte theo bảng S-box</li>
+              <li>
+                <strong>ShiftRows:</strong> Dịch trái các hàng của ma trận
+              </li>
+              <li><strong>MixColumns:</strong> Trộn các cột của ma trận</li>
+              <li><strong>AddRoundKey:</strong> XOR với khóa vòng</li>
+            </ul>
+          </li>
+          <li>Được sử dụng rộng rãi trong bảo mật thông tin hiện đại</li>
+        </ul>
+      </div>
+
+      <!-- Slide 11: Q&A -->
+      <div class="slide thank-you-slide">
+        <h1>Câu hỏi?</h1>
+        <p>Cảm ơn vì sự chú ý của bạn!</p>
+      </div>
+    </div>
+  </body>
+</html>
